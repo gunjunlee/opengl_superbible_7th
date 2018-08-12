@@ -8,8 +8,8 @@ GLuint compile_shaders(void) {
 
     static const GLchar *vertex_shader_source[] = {
             "#version 430 core\n"
-            "layout (location=0) in vec4 offset;\n"
-            "layout (location=1) in vec4 color;\n"
+            "layout (location=0) in vec4 offsets;\n"
+            "layout (location=1) in vec4 colors;\n"
             "out VS_OUT{"
             "   vec4 color;"
             "} vs_out;"
@@ -17,11 +17,8 @@ GLuint compile_shaders(void) {
             "   const vec4 vertices[3] = vec4[3](vec4(0.25, -0.25, 0.5, 1.0),\n"
             "                                    vec4(-0.25, -0.25, 0.5, 1.0),\n"
             "                                    vec4(0.25, 0.25, 0.5, 1.0));\n"
-            "   const vec4 colors[] = vec4[3](vec4(1.0, 0.0, 0.0, 1.0),"
-            "                                 vec4(0.0, 1.0, 0.0, 1.0),"
-            "                                 vec4(0.0, 0.0, 1.0, 1.0));"
-            "   gl_Position = vertices[gl_VertexID] + offset;"
-            "   vs_out.color = colors[gl_VertexID];"
+            "   gl_Position = vertices[gl_VertexID] + offsets;"
+            "   vs_out.color = colors;"
             "}"
     };
 
@@ -82,18 +79,27 @@ public:
         glUseProgram(rendering_program);
 
         glPointSize(4.0f);
-        GLfloat attrib[]={
-                (float)sin(currentTime)*0.5f,
-                (float)cos(currentTime)*0.5f,
-                0.0f, 0.0f
-        };
-        GLfloat attrib_color[]={
-                (float)sin(currentTime)*0.5f,
-                (float)cos(currentTime)*0.5f,
-                0.0f, 0.0f
-        };
-        glVertexAttrib4fv(0, attrib);
-        glVertexAttrib4fv(1, attrib_color);
+
+        GLfloat offsets[][4]={{(float)sin(currentTime)*0.5f,(float)cos(currentTime)*0.5f,0.0f, 0.0f},
+                              {(float)sin(currentTime)*0.5f,(float)cos(currentTime)*0.5f,0.0f, 0.0f},
+                              {(float)sin(currentTime)*0.5f,(float)cos(currentTime)*0.5f,0.0f, 0.0f}};
+
+        GLfloat colors[][4] = {{1.0, 0.0, 0.0, 1.0},
+                            {1.0, 0.0, 0.0, 1.0},
+                            {1.0, 0.0, 0.0, 1.0}};
+
+        GLuint buffers[2];
+        glGenBuffers(2, buffers);
+
+        glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(offsets), offsets, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+        glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+        glEnableVertexAttribArray(1);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
